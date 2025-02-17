@@ -5,6 +5,7 @@ from utils import (
     init_db, save_user_preference, get_last_user_preference
 )
 import time
+from datetime import datetime
 
 # Initialize database
 init_db()
@@ -54,6 +55,12 @@ def create_candlestick_chart(df, title):
 def main():
     st.title("📈 Forex Chart Viewer")
 
+    # Add auto-refresh checkbox
+    auto_refresh = st.sidebar.checkbox('Enable Auto-refresh', value=True)
+    if auto_refresh:
+        st.sidebar.write('Charts will update every minute')
+        st.sidebar.write('Last update: ' + st.session_state.get('last_update', 'Never'))
+
     # Forex pair selection with last preference
     forex_pairs = get_forex_pairs()
     last_preference = get_last_user_preference()
@@ -83,38 +90,52 @@ def main():
             {"interval": "1d", "period": "60d", "title": "Daily"}
         ]
 
-        # Display current price
-        current_data = get_forex_data(selected_pair, "1m", "1d")
-        current_price = current_data['Close'].iloc[-1]
-        st.metric(
-            label="Current Price",
-            value=format_price(current_price)
-        )
+        # Display current price with auto-update
+        current_price_container = st.empty()
 
-        # Create and display charts
-        charts = []
-        for tf in timeframes:
-            with st.spinner(f'Loading {tf["title"]} chart...'):
-                df = get_forex_data(
-                    selected_pair,
-                    tf["interval"],
-                    tf["period"]
-                )
-                charts.append(create_candlestick_chart(
-                    df,
-                    f"{selected_pair} - {tf['title']} Chart"
-                ))
+        def update_charts():
+            # Update current price
+            current_data = get_forex_data(selected_pair, "1m", "1d")
+            current_price = current_data['Close'].iloc[-1]
+            current_price_container.metric(
+                label="Current Price",
+                value=format_price(current_price)
+            )
 
-        with col1:
-            st.plotly_chart(charts[0], use_container_width=True)
-        with col2:
-            st.plotly_chart(charts[1], use_container_width=True)
-        with col3:
-            st.plotly_chart(charts[2], use_container_width=True)
+            # Create and display charts
+            charts = []
+            for tf in timeframes:
+                with st.spinner(f'Loading {tf["title"]} chart...'):
+                    df = get_forex_data(
+                        selected_pair,
+                        tf["interval"],
+                        tf["period"]
+                    )
+                    charts.append(create_candlestick_chart(
+                        df,
+                        f"{selected_pair} - {tf['title']} Chart"
+                    ))
 
-        # Auto-refresh
-        time.sleep(60)
-        st.experimental_rerun()
+            # Update charts in columns
+            with col1:
+                st.plotly_chart(charts[0], use_container_width=True)
+            with col2:
+                st.plotly_chart(charts[1], use_container_width=True)
+            with col3:
+                st.plotly_chart(charts[2], use_container_width=True)
+
+            # Update last refresh time
+            if auto_refresh:
+                st.session_state['last_update'] = datetime.now().strftime('%H:%M:%S')
+
+        # Initial update
+        update_charts()
+
+        # Auto-refresh using native Streamlit rerun
+        if auto_refresh:
+            st.empty()  # This triggers a rerun after 60 seconds
+            time.sleep(60)
+            st.rerun()
 
     except Exception as e:
         error_container.error(f"Error: {str(e)}")
