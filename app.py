@@ -1,11 +1,7 @@
 import streamlit as st
-import plotly.graph_objects as go
-from utils import (
-    get_forex_pairs, get_forex_data, format_price,
-    init_db, save_user_preference, get_last_user_preference
-)
 import time
 from datetime import datetime
+from utils import get_forex_pairs, save_user_preference, get_last_user_preference, init_db
 
 # Initialize database
 init_db()
@@ -17,49 +13,56 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS
+# Custom CSS for TradingView widgets and layout
 st.markdown("""
     <style>
-    .stPlotlyChart {
-        background-color: white;
-        border-radius: 5px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        padding: 10px;
+    .tradingview-widget-container {
+        height: 400px !important;
+        margin-bottom: 20px;
     }
     .stSelectbox {
         margin-bottom: 20px;
     }
+    iframe {
+        width: 100%;
+        height: 400px;
+        border: none;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-def create_candlestick_chart(df, title):
-    """Creates a candlestick chart using Plotly"""
-    fig = go.Figure(data=[go.Candlestick(x=df.index,
-                                        open=df['Open'],
-                                        high=df['High'],
-                                        low=df['Low'],
-                                        close=df['Close'])])
-
-    fig.update_layout(
-        title=title,
-        yaxis_title='Price',
-        xaxis_title='Date',
-        height=400,
-        margin=dict(l=50, r=50, t=50, b=50),
-        yaxis=dict(tickformat='.5f'),
-        template='plotly_white'
-    )
-
-    return fig
+def create_tradingview_chart(symbol, timeframe, container_id):
+    """Creates a TradingView chart widget"""
+    return f"""
+        <div class="tradingview-widget-container" id="{container_id}">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js">
+            {{
+                "width": "100%",
+                "height": "400",
+                "symbol": "FX:{symbol}",
+                "interval": "{timeframe}",
+                "timezone": "Etc/UTC",
+                "theme": "light",
+                "style": "1",
+                "locale": "en",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "support_host": "https://www.tradingview.com"
+            }}
+            </script>
+        </div>
+    """
 
 def main():
-    st.title("📈 Forex Chart Viewer")
+    st.title("📈 Live Forex Chart Viewer")
 
-    # Add auto-refresh checkbox
-    auto_refresh = st.sidebar.checkbox('Enable Auto-refresh', value=True)
-    if auto_refresh:
-        st.sidebar.write('Charts will update every minute')
-        st.sidebar.write('Last update: ' + st.session_state.get('last_update', 'Never'))
+    # Auto-refresh status
+    if 'last_update' not in st.session_state:
+        st.session_state.last_update = datetime.now().strftime('%H:%M:%S')
+
+    st.sidebar.write('Charts update automatically every second')
+    st.sidebar.write('Last update: ' + st.session_state.last_update)
 
     # Forex pair selection with last preference
     forex_pairs = get_forex_pairs()
@@ -76,70 +79,36 @@ def main():
     # Save user preference
     save_user_preference(selected_pair)
 
-    # Error container
-    error_container = st.empty()
-
     try:
+        # Remove '=X' suffix for TradingView
+        symbol = selected_pair.replace('=X', '')
+
         # Create three columns for the charts
         col1, col2, col3 = st.columns(3)
 
         # Timeframe configurations
         timeframes = [
-            {"interval": "5m", "period": "1d", "title": "5 Minutes"},
-            {"interval": "1h", "period": "7d", "title": "1 Hour"},
-            {"interval": "1d", "period": "60d", "title": "Daily"}
+            {"interval": "5", "title": "5 Minutes"},
+            {"interval": "60", "title": "1 Hour"},
+            {"interval": "D", "title": "Daily"}
         ]
 
-        # Display current price with auto-update
-        current_price_container = st.empty()
+        # Display charts in columns
+        with col1:
+            st.markdown(create_tradingview_chart(symbol, timeframes[0]["interval"], "chart1"), unsafe_allow_html=True)
+        with col2:
+            st.markdown(create_tradingview_chart(symbol, timeframes[1]["interval"], "chart2"), unsafe_allow_html=True)
+        with col3:
+            st.markdown(create_tradingview_chart(symbol, timeframes[2]["interval"], "chart3"), unsafe_allow_html=True)
 
-        def update_charts():
-            # Update current price
-            current_data = get_forex_data(selected_pair, "1m", "1d")
-            current_price = current_data['Close'].iloc[-1]
-            current_price_container.metric(
-                label="Current Price",
-                value=format_price(current_price)
-            )
-
-            # Create and display charts
-            charts = []
-            for tf in timeframes:
-                with st.spinner(f'Loading {tf["title"]} chart...'):
-                    df = get_forex_data(
-                        selected_pair,
-                        tf["interval"],
-                        tf["period"]
-                    )
-                    charts.append(create_candlestick_chart(
-                        df,
-                        f"{selected_pair} - {tf['title']} Chart"
-                    ))
-
-            # Update charts in columns
-            with col1:
-                st.plotly_chart(charts[0], use_container_width=True)
-            with col2:
-                st.plotly_chart(charts[1], use_container_width=True)
-            with col3:
-                st.plotly_chart(charts[2], use_container_width=True)
-
-            # Update last refresh time
-            if auto_refresh:
-                st.session_state['last_update'] = datetime.now().strftime('%H:%M:%S')
-
-        # Initial update
-        update_charts()
-
-        # Auto-refresh using native Streamlit rerun
-        if auto_refresh:
-            st.empty()  # This triggers a rerun after 60 seconds
-            time.sleep(60)
-            st.rerun()
+        # Update timestamp every second
+        st.session_state.last_update = datetime.now().strftime('%H:%M:%S')
+        time.sleep(1)
+        st.rerun()
 
     except Exception as e:
-        error_container.error(f"Error: {str(e)}")
-        st.warning("Please try selecting a different pair or wait a few minutes.")
+        st.error(f"Error: {str(e)}")
+        st.warning("Please try selecting a different pair or refresh the page.")
 
 if __name__ == "__main__":
     main()
