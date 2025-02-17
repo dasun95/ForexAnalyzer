@@ -19,6 +19,7 @@ st.markdown("""
     .tradingview-widget-container {
         height: 400px !important;
         margin-bottom: 20px;
+        width: 100% !important;
     }
     .stSelectbox {
         margin-bottom: 20px;
@@ -92,6 +93,28 @@ def main():
     # Save user preference
     save_user_preference(selected_pair)
 
+    # Economic Calendar
+    st.header("📅 Economic Calendar")
+    calendar_html = """
+        <div class="tradingview-widget-container">
+            <div class="tradingview-widget-container__widget"></div>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+            {
+                "width": "100%",
+                "height": "400",
+                "colorTheme": "light",
+                "isTransparent": false,
+                "locale": "en",
+                "importanceFilter": "0,1,2",
+                "currencyFilter": "USD,EUR,JPY,GBP,AUD,CAD,CHF,NZD"
+            }
+            </script>
+        </div>
+    """
+    st.components.v1.html(calendar_html, height=450)
+    
+    st.markdown("---")
+    
     try:
         # Create three columns for the charts
         col1, col2, col3 = st.columns(3)
