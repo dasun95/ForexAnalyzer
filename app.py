@@ -2,7 +2,6 @@ import streamlit as st
 import time
 from datetime import datetime
 from utils import get_forex_pairs, save_user_preference, get_last_user_preference, init_db
-from forex_factory import get_high_impact_news
 
 # Initialize database
 init_db()
@@ -23,16 +22,6 @@ st.markdown("""
     }
     .stSelectbox {
         margin-bottom: 20px;
-    }
-    .news-container {
-        margin-top: 30px;
-        padding: 15px;
-        border-radius: 5px;
-        background-color: #f8f9fa;
-    }
-    .news-header {
-        font-weight: bold;
-        color: #d73027;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -77,27 +66,6 @@ def create_tradingview_chart(symbol, timeframe, container_id):
         </div>
     """
     return chart_html
-
-def display_forex_news():
-    """Display high impact forex news"""
-    st.subheader("📰 High Impact Forex News")
-
-    with st.spinner("Fetching latest forex news..."):
-        news_items = get_high_impact_news()
-
-        if not news_items:
-            st.warning("Unable to fetch forex news at the moment. Please try again later.")
-            return
-
-        for news in news_items:
-            with st.expander(f"{news['currency']} - {news['event']} ({news['date']} {news['time']})"):
-                cols = st.columns(3)
-                with cols[0]:
-                    st.metric("Actual", news['actual'])
-                with cols[1]:
-                    st.metric("Forecast", news['forecast'])
-                with cols[2]:
-                    st.metric("Previous", news['previous'])
 
 def main():
     st.title("📈 Live Forex Chart Viewer")
@@ -156,9 +124,6 @@ def main():
                 create_tradingview_chart(selected_pair, timeframes[2]["interval"], "chart3"),
                 height=450
             )
-
-        # Display Forex Factory news
-        display_forex_news()
 
         # Update timestamp every second
         st.session_state.last_update = datetime.now().strftime('%H:%M:%S')
