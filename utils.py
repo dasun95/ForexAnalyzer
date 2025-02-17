@@ -21,7 +21,7 @@ def get_forex_pairs():
     """Returns a list of common forex pairs"""
     return [
         "EURUSD=X", "GBPUSD=X", "USDJPY=X", "AUDUSD=X", 
-        "USDCHF=X", "NZDUSD=X", "USDCAD=X"
+        "USDCHF=X", "NZDUSD=X", "USDCAD=X", "XAUUSD"  # Added XAUUSD
     ]
 
 def save_price_data(db: Session, pair_id: int, df: pd.DataFrame, timeframe: str):
