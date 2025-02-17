@@ -30,10 +30,11 @@ def create_tradingview_chart(symbol, timeframe, container_id):
     """Creates a TradingView chart widget with error handling"""
     # Special handling for XAUUSD
     if symbol == "XAUUSD":
-        tv_symbol = "XAUUSD"
+        tv_symbol = "CAPITALCOM:GOLD"
     else:
         # Remove '=X' suffix for regular forex pairs
         tv_symbol = symbol.replace('=X', '')
+        tv_symbol = f"FX:{tv_symbol}"
 
     chart_html = f"""
         <div class="tradingview-widget-container">
@@ -48,7 +49,7 @@ def create_tradingview_chart(symbol, timeframe, container_id):
             new TradingView.widget({{
                 "width": "100%",
                 "height": 400,
-                "symbol": "FX:{tv_symbol}",
+                "symbol": "{tv_symbol}",
                 "interval": "{timeframe}",
                 "timezone": "Etc/UTC",
                 "theme": "light",
