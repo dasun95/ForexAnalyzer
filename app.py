@@ -57,7 +57,10 @@ def create_tradingview_chart(symbol, timeframe, container_id):
                 "locale": "en",
                 "enable_publishing": false,
                 "allow_symbol_change": true,
-                "container_id": "{container_id}"
+                "container_id": "{container_id}",
+                "studies": [
+                    {{"id": "MAExp@tv-basicstudies", "inputs": {{"length": 21}}}}
+                ]
             }});
             </script>
         </div>
