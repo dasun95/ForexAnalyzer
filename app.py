@@ -23,23 +23,24 @@ st.markdown("""
     .stSelectbox {
         margin-bottom: 20px;
     }
-    iframe {
-        width: 100%;
-        height: 400px;
-        border: none;
-    }
     </style>
 """, unsafe_allow_html=True)
 
 def create_tradingview_chart(symbol, timeframe, container_id):
-    """Creates a TradingView chart widget"""
-    return f"""
-        <div class="tradingview-widget-container" id="{container_id}">
-            <div class="tradingview-widget-container__widget"></div>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js">
-            {{
+    """Creates a TradingView chart widget with error handling"""
+    chart_html = f"""
+        <div class="tradingview-widget-container">
+            <div id="{container_id}"></div>
+            <div class="tradingview-widget-copyright">
+                <a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank">
+                    <span class="blue-text">Track all markets on TradingView</span>
+                </a>
+            </div>
+            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+            <script type="text/javascript">
+            new TradingView.widget({{
                 "width": "100%",
-                "height": "400",
+                "height": 400,
                 "symbol": "FX:{symbol}",
                 "interval": "{timeframe}",
                 "timezone": "Etc/UTC",
@@ -48,11 +49,12 @@ def create_tradingview_chart(symbol, timeframe, container_id):
                 "locale": "en",
                 "enable_publishing": false,
                 "allow_symbol_change": true,
-                "support_host": "https://www.tradingview.com"
-            }}
+                "container_id": "{container_id}"
+            }});
             </script>
         </div>
     """
+    return chart_html
 
 def main():
     st.title("📈 Live Forex Chart Viewer")
@@ -93,13 +95,27 @@ def main():
             {"interval": "D", "title": "Daily"}
         ]
 
-        # Display charts in columns
+        # Display charts in columns with titles
         with col1:
-            st.markdown(create_tradingview_chart(symbol, timeframes[0]["interval"], "chart1"), unsafe_allow_html=True)
+            st.subheader("5 Minutes Chart")
+            st.components.v1.html(
+                create_tradingview_chart(symbol, timeframes[0]["interval"], "chart1"),
+                height=450
+            )
+
         with col2:
-            st.markdown(create_tradingview_chart(symbol, timeframes[1]["interval"], "chart2"), unsafe_allow_html=True)
+            st.subheader("1 Hour Chart")
+            st.components.v1.html(
+                create_tradingview_chart(symbol, timeframes[1]["interval"], "chart2"),
+                height=450
+            )
+
         with col3:
-            st.markdown(create_tradingview_chart(symbol, timeframes[2]["interval"], "chart3"), unsafe_allow_html=True)
+            st.subheader("Daily Chart")
+            st.components.v1.html(
+                create_tradingview_chart(symbol, timeframes[2]["interval"], "chart3"),
+                height=450
+            )
 
         # Update timestamp every second
         st.session_state.last_update = datetime.now().strftime('%H:%M:%S')
