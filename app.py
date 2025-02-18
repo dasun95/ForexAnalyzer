@@ -78,21 +78,6 @@ def main():
     st.sidebar.write('Charts update automatically every second')
     st.sidebar.write('Last update: ' + st.session_state.last_update)
 
-    # Forex pair selection with last preference
-    forex_pairs = get_forex_pairs()
-    last_preference = get_last_user_preference()
-    default_index = forex_pairs.index(last_preference) if last_preference in forex_pairs else 0
-
-    selected_pair = st.selectbox(
-        "Select Forex Pair",
-        forex_pairs,
-        index=default_index,
-        help="Choose the currency pair you want to monitor"
-    )
-
-    # Save user preference
-    save_user_preference(selected_pair)
-
     # Economic Calendar
     st.header("📅 Economic Calendar")
     calendar_html = """
@@ -114,7 +99,22 @@ def main():
     st.components.v1.html(calendar_html, height=450)
     
     st.markdown("---")
-    
+
+    # Forex pair selection with last preference
+    forex_pairs = get_forex_pairs()
+    last_preference = get_last_user_preference()
+    default_index = forex_pairs.index(last_preference) if last_preference in forex_pairs else 0
+
+    selected_pair = st.selectbox(
+        "Select Forex Pair",
+        forex_pairs,
+        index=default_index,
+        help="Choose the currency pair you want to monitor"
+    )
+
+    # Save user preference
+    save_user_preference(selected_pair)
+
     try:
         # Create three columns for the charts
         col1, col2, col3 = st.columns(3)
