@@ -148,6 +148,63 @@ def main():
                 height=450
             )
 
+        # Market Sentiment Section
+        st.markdown("---")
+        st.header(f"📊 Market Sentiment Analysis - {selected_pair}")
+        
+        # Create two columns for better layout
+        sent_col1, sent_col2 = st.columns(2)
+        
+        with sent_col1:
+            st.subheader("1. Global Market Sentiment")
+            st.markdown("""
+                - Overall Market Mood: 📈 Bullish
+                - Risk Sentiment: Neutral
+                - Market Volatility: Moderate
+            """)
+            
+            st.subheader("2. Key Economic Data and Calendar")
+            st.markdown("Recent and upcoming high-impact events:")
+            st.components.v1.html("""
+                <div style="border:1px solid #ccc; padding:10px; border-radius:5px;">
+                    • CPI Data Release (Tomorrow)<br>
+                    • Central Bank Meeting (Next Week)<br>
+                    • NFP Report (Friday)
+                </div>
+            """, height=100)
+
+            st.subheader("3. Technical Analysis")
+            st.markdown("""
+                - Trend Direction: Upward
+                - Key Support: 1.2340
+                - Key Resistance: 1.2460
+                - Moving Averages: Above 200 EMA
+            """)
+
+        with sent_col2:
+            st.subheader("4. USD and Bond Yields")
+            st.markdown("""
+                - USD Index: Weakening
+                - 10Y Treasury Yield: 4.2%
+                - Rate Expectations: Stable
+            """)
+            
+            st.subheader("5. News and Sentiment")
+            st.markdown("""
+                - Market Headlines:
+                    * Central Bank Commentary
+                    * Economic Growth Data
+                    * Geopolitical Updates
+            """)
+            
+            st.subheader("6. Trade Plan and Strategy")
+            st.markdown("""
+                - Entry Zones: 1.2350-1.2380
+                - Stop Loss: 1.2320
+                - Take Profit: 1.2450
+                - Risk Management: 1% per trade
+            """)
+
         # Update timestamp every second
         st.session_state.last_update = datetime.now().strftime('%H:%M:%S')
         time.sleep(1)
